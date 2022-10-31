@@ -1,7 +1,7 @@
 API_HOST=(`env | grep IPUOF_VIPU_API_HOST | awk -F '=' '{print $2}'`)
 API_PARTITION=(`env | grep IPUOF_VIPU_API_PARTITION_ID | awk -F '=' '{print $2}'`)
-echo $API_HOST
-echo $API_PARTITION
+echo 'API HOST: ' $API_HOST
+echo 'API PARTITION:' $API_PARTITION
 
 docker run \
     --shm-size=1g \
@@ -18,7 +18,7 @@ docker run \
     --privileged \
     --ulimit stack=67108864 \
     -ti \
-    -v `pwd`:/mnt/host \
+    -v `pwd`/../../:/mnt/host \
     graphcore_triton:latest
 
 

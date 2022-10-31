@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Graphcore Ltd. 
+# Copyright (c) 2022 Graphcore Ltd.
 #               2022 JinLe Tong (richardt@graphcore.ai)
 # All rights reserved.
 #
@@ -14,45 +14,99 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+
 import torch
 import poptorch
 
+import yaml
+import fire
+from pathlib import Path
+
+from wenet.utils.init_model import init_model
+
+
+class ExportPipeline:
+    def __init__(
+        self,
+        ckpt_folder: str,
+        ckpt_file: str,
+        cmvn_file: str,
+        vocab_file: str,
+        config_file: str,
+        output_folder: str,
+        beam_size: int = 10,
+        reverse_weight: float = -1.0,
+        ctc_weight: float = -1.0,
+    ):
+        """
+        ckpt_folder: folder for checkpoint
+        ckpt_file: checkpoint file name
+        cmvn_file: cmvn file name
+        vocab_file: vocab file name
+        config_file: config file name
+        output_folder: output popef's folder
+        """
+        self.ckpt_folder = Path(ckpt_folder)
+        self.ckpt_file = self.ckpt_folder.joinpath(ckpt_file)
+        self.cmvn_file = self.ckpt_folder.joinpath(cmvn_file)
+        self.vocab_file = self.ckpt_folder.joinpath(vocab_file)
+        self.config_file = self.ckpt_folder.joinpath(config_file)
+        self.output_folder = Path(output_folder)
+        self.reverse_weight = reverse_weight
+        self.beam_size = beam_size
+        self.ctc_weight = ctc_weight
+
+    def run(self):
+        torch.manual_seed(0)
+        torch.set_printoptions(precision=10)
+        self._load_ckpt()
+        self._compile_graph()
+        self._check_precision()
+
+    def _load_ckpt(self):
+        assert self.ckpt_folder.exists()
+        assert self.ckpt_file.exists()
+        assert self.cmvn_file.exists()
+        assert self.vocab_file.exists()
+        assert self.config_file.exists()
+
+        with open(self.config_file, 'r') as reader:
+            configs = yaml.load(reader, Loader=yaml.FullLoader)
+            configs['cmvn_file'] = str(self.cmvn_file)
+            if self.reverse_weight != -1.0:
+                configs['reverse_weight'] = self.reverse_weight
+            if self.ctc_weight != -1.0:
+                configs['ctc_weight'] = self.ctc_weight
+            configs["encoder_conf"]["use_dynamic_chunk"] = False
+
+        model = init_model(configs)
+        model.load_state_dict(
+            torch.load(self.ckpt_file, map_location='cpu'),
+            strict=False)
+        model.eval()
+        print(model)
+
+    def _compile_graph(self):
+        pass
+
+    def _check_precision(self):
+        pass
+
+
+class Encoder(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+
+class StreamEncoder(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+
+class Decoder(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='export ipu model')
-    parser.add_argument('--config', required=True, help='config file')
-    parser.add_argument('--checkpoint', required=True, help='checkpoint model')
-    parser.add_argument('--cmvn_file', required=False, default='', type=str,
-                        help='global_cmvn file, default path is in config file')
-    parser.add_argument('--reverse_weight', default=-1.0, type=float,
-                        required=False,
-                        help='reverse weight for bitransformer,' +
-                        'default value is in config file')
-    parser.add_argument('--ctc_weight', default=-1.0, type=float,
-                        required=False,
-                        help='ctc weight, default value is in config file')
-    parser.add_argument('--beam_size', default=10, type=int, required=False,
-                        help="beam size would be ctc output size")
-    parser.add_argument('--output_onnx_dir',
-                        default="onnx_model",
-                        help='output onnx encoder and decoder directory')
-    parser.add_argument('--fp16',
-                        action='store_true',
-                        help='whether to export fp16 model, default false')
-    # arguments for streaming encoder
-    parser.add_argument('--streaming',
-                        action='store_true',
-                        help="whether to export streaming encoder, default false")
-    parser.add_argument('--decoding_chunk_size',
-                        default=16,
-                        type=int,
-                        required=False,
-                        help='the decoding chunk size, <=0 is not supported')
-    parser.add_argument('--num_decoding_left_chunks',
-                        default=5,
-                        type=int,
-                        required=False,
-                        help="number of left chunks, <= 0 is not supported")
-    args = parser.parse_args()
+    fire.Fire(ExportPipeline)

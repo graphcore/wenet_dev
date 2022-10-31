@@ -12,7 +12,7 @@ about Triton and Triton for IPU: [Triton](https://github.com/triton-inference-se
 ## Usage
 
 step 1: setup environment
-before setup the container, please make sure you have setup the ipu partition by `env | grep IPUOF_VIPU_API_HOST`
+before setup the container, please make sure you have setup the ipu partition by checking `env | grep IPUOF_VIPU_API_HOST`
 
 ```
 bash scripts/setup_image.sh;
@@ -21,6 +21,7 @@ bash scripts/setup_container.sh;
 
 ```
 step 2: export model
+ckpt: Aishell2, FP16, onnx, [U2++ Conformer](http://mobvoi-speech-public.ufile.ucloud.cn/public/wenet/aishell2/20210618_u2pp_conformer_exp.tar.gz)
 ```
 ```
 step 3: setup triton server
