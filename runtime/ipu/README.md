@@ -1,32 +1,38 @@
-# WeNet runtime solution for graphcore's IPU
+# WeNet runtime on IPU (Intelligence Processing Unit) with Triton Inference Server + IPU backend 
 
 ## Background References
-about graphcore: [Graphcore home page]()
-about IPU: [IPU documents]()
-about Triton and Triton for IPU: [Triton official page]() [Triton For IPU]()
+
+about Graphcore: [Graphcore home page](https://www.graphcore.ai)
+
+about IPU: [IPU documents](https://docs.graphcore.ai/en/latest/)
+
+about Triton and Triton for IPU: [Triton](https://github.com/triton-inference-server/server), [Triton For IPU](https://docs.graphcore.ai/projects/poplar-triton-backend/en/latest/introduction.html)
 
 
 ## Usage
-step 1
-export model
+
+step 1: setup environment
+before setup the container, please make sure you have setup the ipu partition by `env | grep IPUOF_VIPU_API_HOST`
+
+```
+bash scripts/setup_image.sh;
+bash scripts/setup_container.sh;
+```
+
+```
+step 2: export model
 ```
 ```
-step 2
-setup environment
-```
-bash scripts/setup_docker_image.sh;
-bash scripts/setup_docker_container.sh
-```
-step 3
-setup triton server
+step 3: setup triton server
 in the container:
 ```
-bash scripts/setup_offline_server.sh
-or 
-bash scripts/setup_online_server.sh
+bash scripts/setup_offline_server.sh;
 ```
-step 4
-recognize wavs
+or
+```
+bash scripts/setup_online_server.sh;
+```
+step 4: recognize wavs
 ```
 ```
 ## Precision
@@ -38,3 +44,8 @@ recognize wavs
 ## Performance analyze
 ```
 ```
+
+
+## License
+
+

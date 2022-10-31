@@ -1,0 +1,57 @@
+From graphcore/pytorch:3.0.0-ubuntu-20.04-20221025
+LABEL Graphcore Ltd
+LABEL maintainer="Graphcore"
+LABEL "author"="richardt@graphcore.ai"
+
+#Install the build dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
+    git \
+    python3 \
+    python3-pip \
+    python3-distutils \
+    make \
+    g++ \
+    gcc \
+    cmake \
+    libssl-dev \
+    zlib1g-dev \
+    rapidjson-dev \
+    libboost-dev \
+    libre2-dev \
+    librdmacm-dev \
+    libarchive-dev
+
+RUN pip3 install cmake numpy
+
+#Build triton backend
+ENV TAG r21.05
+RUN git clone https://github.com/triton-inference-server/server.git && \
+    cd server && \
+    git checkout $TAG && \
+    mkdir -p mybuild/tritonserver/install && \
+    python3 build.py \
+        --build-dir mybuild \
+        --no-container-build \
+        --endpoint=grpc \
+        --enable-logging \
+        --enable-stats \
+        --cmake-dir `pwd`/build \
+        --repo-tag=common:$TAG \
+        --repo-tag=core:$TAG \
+        --repo-tag=backend:$TAG \
+        --repo-tag=thirdparty:$TAG \
+        --backend=ensemble:$TAG
+
+#Build python backend and merge the backend folder
+RUN git clone https://github.com/triton-inference-server/python_backend.git && \
+    cd python_backend && \
+    git checkout $TAG && \
+    mkdir build && \
+    cd build && \
+    cmake -DTRITON_BACKEND_REPO_TAG=$TAG -DTRITON_COMMON_REPO_TAG=$TAG -DTRITON_CORE_REPO_TAG=$TAG -DCMAKE_INSTALL_PREFIX=/server/mybuild/tritonserver/ .. && \
+    make install
+
+RUN cp -r /opt/triton/lib /server/mybuild/tritonserver/backends/poplar
+
+

@@ -1,0 +1,1 @@
+docker build -t graphcore_triton - < ./Dockerfile/Dockerfile.server
